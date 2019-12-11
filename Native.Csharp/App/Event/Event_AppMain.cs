@@ -51,7 +51,7 @@ namespace Native.Csharp.App.Event
 			//
 			// 说明: 
 			//	  由于采用了新的容器解析机制, 所以此方法不需要写任何的分发过程
-			//	  此方法的使用需要熟悉 Unity 框架 (IOC 框架)
+			//	  此方法的使用需要熟悉 Autofac 框架 (IOC 框架)
 		}
 	}
 }
