@@ -1,6 +1,6 @@
 <#@ template debug="false" hostspecific="true" language="C#" #>
 <#@ assembly name="System.Core" #>
-<#@ assembly name="$(SolutionDir)packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll" #>
+<#@ assembly name="$(SolutionDir)\Newtonsoft.Json.dll" #>
 <#@ import namespace="System.IO"#>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
@@ -29,7 +29,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Native.Csharp.Sdk.Cqp.EventArgs;
 using Native.Csharp.Sdk.Cqp.Interface;
-using Unity;
+using Autofac;
 
 namespace Native.Csharp.App.Core
 {
@@ -131,9 +131,9 @@ namespace Native.Csharp.App.Core
 					temp.AppendLine (string.Format ("\t\t\t * Name: {0}", token["name"].Value<string> ()));
 					temp.AppendLine (string.Format ("\t\t\t * Function: {0}", token["function"].Value<string> ()));
 					temp.AppendLine ("\t\t\t */");
-					temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<ICqStatus> (\"{0}\") == true)", token["name"].Value<string> ()));
+					temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<ICqStatus> (\"{0}\") == true)", token["name"].Value<string> ()));
 					temp.AppendLine ("\t\t\t{");
-					temp.AppendLine (string.Format ("\t\t\t\tStatus_{0} = Common.UnityContainer.Resolve<ICqStatus> (\"{1}\").CqStatus;", token["title"].Value<string> (), token["name"].Value<string> ()));
+					temp.AppendLine (string.Format ("\t\t\t\tStatus_{0} = Common.Container.ResolveKeyed<ICqStatus> (\"{1}\").CqStatus;", token["title"].Value<string> (), token["name"].Value<string> ()));
 					temp.AppendLine ("\t\t\t}");
 					temp.AppendLine ();
 				}

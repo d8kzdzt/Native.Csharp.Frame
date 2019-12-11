@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Native.Csharp.Sdk.Cqp.EventArgs;
 using Native.Csharp.Sdk.Cqp.Interface;
-using Unity;
+using Autofac;
 
 namespace Native.Csharp.App.Core
 {
@@ -35,18 +35,18 @@ namespace Native.Csharp.App.Core
 			 * Name: 设置A
 			 * Function: _menuA
 			 */
-			if (Common.UnityContainer.IsRegistered<ICallMenu> ("设置A") == true)
+			if (Common.Container.IsRegisteredWithKey<ICallMenu> ("设置A") == true)
 			{
-				Menu__menuA = Common.UnityContainer.Resolve<ICallMenu> ("设置A").CallMenu;
+				Menu__menuA = Common.Container.ResolveKeyed<ICallMenu> ("设置A").CallMenu;
 			}
 
 			/*
 			 * Name: 设置B
 			 * Function: _menuB
 			 */
-			if (Common.UnityContainer.IsRegistered<ICallMenu> ("设置B") == true)
+			if (Common.Container.IsRegisteredWithKey<ICallMenu> ("设置B") == true)
 			{
-				Menu__menuB = Common.UnityContainer.Resolve<ICallMenu> ("设置B").CallMenu;
+				Menu__menuB = Common.Container.ResolveKeyed<ICallMenu> ("设置B").CallMenu;
 			}
 
 

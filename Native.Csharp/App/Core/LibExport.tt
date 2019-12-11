@@ -1,6 +1,6 @@
 <#@ template debug="false" hostspecific="true" language="C#" #>
 <#@ assembly name="System.Core" #>
-<#@ assembly name="$(SolutionDir)packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll" #>
+<#@ assembly name="$(SolutionDir)\Newtonsoft.Json.dll" #>
 <#@ import namespace="System.IO"#>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
@@ -33,7 +33,7 @@ using Native.Csharp.Sdk.Cqp.EventArgs;
 using Native.Csharp.Sdk.Cqp.Interface;
 using Native.Csharp.Sdk.Cqp.Model;
 using Native.Csharp.Sdk.Cqp.Expand;
-using Unity;
+using Autofac;
 
 namespace Native.Csharp.App.Core
 {
@@ -53,15 +53,18 @@ namespace Native.Csharp.App.Core
 			
 			// 初始化 Costura.Fody
 			CosturaUtility.Initialize ();
-			
+
 			// 初始化依赖注入容器
-			Common.UnityContainer = new UnityContainer ();
+			Common.ContainerBuilder = new ContainerBuilder ();
 
 			// 程序开始调用方法进行注册
-			Event_AppMain.Registbackcall (Common.UnityContainer);
+			Event_AppMain.Registbackcall (Common.ContainerBuilder);
 
 			// 注册完毕调用方法进行分发
-			Event_AppMain.Resolvebackcall (Common.UnityContainer);
+			Event_AppMain.Resolvebackcall (Common.ContainerBuilder);
+
+			//建立依赖注入容器实例
+			Common.Container = Common.ContainerBuilder.Build();
 
 			// 分发应用内事件
 			ResolveAppbackcall ();
@@ -100,7 +103,7 @@ namespace Native.Csharp.App.Core
 			Common.CqApi = new CqApi (authCode);
 
 			// AuthCode 传递完毕后将对象加入容器托管, 以便在其它项目中调用
-			Common.UnityContainer.RegisterInstance<CqApi> ("<#=		Host.ResolveAssemblyReference ("$(TargetName)") #>", Common.CqApi);
+			Common.ContainerBuilder.RegisterInstance<CqApi> (Common.CqApi).Keyed<CqApi>("<#=		Host.ResolveAssemblyReference ("$(TargetName)") #>");
 
 			// 注册插件全局异常捕获回调, 用于捕获未处理的异常, 回弹给 酷Q 做处理
 			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -554,125 +557,125 @@ namespace Native.Csharp.App.Core
 					switch (token["type"].Value<int> ())
 					{
 						case 1001:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<ICqStartup> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<ICqStartup> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tCqStartup_{0} = Common.UnityContainer.Resolve<ICqStartup> (\"{1}\").CqStartup;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tCqStartup_{0} = Common.Container.ResolveKeyed<ICqStartup> (\"{1}\").CqStartup;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 1002:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<ICqExit> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<ICqExit> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tCqExit_{0} = Common.UnityContainer.Resolve<ICqExit> (\"{1}\").CqExit;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tCqExit_{0} = Common.Container.ResolveKeyed<ICqExit> (\"{1}\").CqExit;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 1003:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<ICqAppEnable> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<ICqAppEnable> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tAppEnable_{0} = Common.UnityContainer.Resolve<ICqAppEnable> (\"{1}\").CqAppEnable;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tAppEnable_{0} = Common.Container.ResolveKeyed<ICqAppEnable> (\"{1}\").CqAppEnable;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 1004:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<ICqAppDisable> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<ICqAppDisable> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tAppDisable_{0} = Common.UnityContainer.Resolve<ICqAppDisable> (\"{1}\").CqAppDisable;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tAppDisable_{0} = Common.Container.ResolveKeyed<ICqAppDisable> (\"{1}\").CqAppDisable;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 21:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveFriendMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveFriendMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveFriendMessage_{0} = Common.UnityContainer.Resolve<IReceiveFriendMessage> (\"{1}\").ReceiveFriendMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveFriendMessage_{0} = Common.Container.ResolveKeyed<IReceiveFriendMessage> (\"{1}\").ReceiveFriendMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveOnlineStatusMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveOnlineStatusMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveOnlineStatusMessage_{0} = Common.UnityContainer.Resolve<IReceiveOnlineStatusMessage> (\"{1}\").ReceiveOnlineStatusMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveOnlineStatusMessage_{0} = Common.Container.ResolveKeyed<IReceiveOnlineStatusMessage> (\"{1}\").ReceiveOnlineStatusMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveGroupPrivateMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveGroupPrivateMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveGroupPrivateMessage_{0} = Common.UnityContainer.Resolve<IReceiveGroupPrivateMessage> (\"{1}\").ReceiveGroupPrivateMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveGroupPrivateMessage_{0} = Common.Container.ResolveKeyed<IReceiveGroupPrivateMessage> (\"{1}\").ReceiveGroupPrivateMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveDiscussPrivateMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveDiscussPrivateMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveDiscussPrivateMessage_{0} = Common.UnityContainer.Resolve<IReceiveDiscussPrivateMessage> (\"{1}\").ReceiveDiscussPrivateMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveDiscussPrivateMessage_{0} = Common.Container.ResolveKeyed<IReceiveDiscussPrivateMessage> (\"{1}\").ReceiveDiscussPrivateMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 2:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveGroupMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveGroupMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveGroupMessage_{0} = Common.UnityContainer.Resolve<IReceiveGroupMessage> (\"{1}\").ReceiveGroupMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveGroupMessage_{0} = Common.Container.ResolveKeyed<IReceiveGroupMessage> (\"{1}\").ReceiveGroupMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 4:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveDiscussMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveDiscussMessage> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveDiscussMessage_{0} = Common.UnityContainer.Resolve<IReceiveDiscussMessage> (\"{1}\").ReceiveDiscussMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveDiscussMessage_{0} = Common.Container.ResolveKeyed<IReceiveDiscussMessage> (\"{1}\").ReceiveDiscussMessage;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 11:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveGroupFileUpload> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveGroupFileUpload> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveFileUploadMessage_{0} = Common.UnityContainer.Resolve<IReceiveGroupFileUpload> (\"{1}\").ReceiveGroupFileUpload;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveFileUploadMessage_{0} = Common.Container.ResolveKeyed<IReceiveGroupFileUpload> (\"{1}\").ReceiveGroupFileUpload;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 101:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveGroupManageIncrease> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveGroupManageIncrease> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveManageIncrease_{0} = Common.UnityContainer.Resolve<IReceiveGroupManageIncrease> (\"{1}\").ReceiveGroupManageIncrease;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveManageIncrease_{0} = Common.Container.ResolveKeyed<IReceiveGroupManageIncrease> (\"{1}\").ReceiveGroupManageIncrease;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveGroupManageDecrease> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveGroupManageDecrease> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveManageDecrease_{0} = Common.UnityContainer.Resolve<IReceiveGroupManageDecrease> (\"{1}\").ReceiveGroupManageDecrease;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveManageDecrease_{0} = Common.Container.ResolveKeyed<IReceiveGroupManageDecrease> (\"{1}\").ReceiveGroupManageDecrease;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 102:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveGroupMemberLeave> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveGroupMemberLeave> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveMemberLeave_{0} = Common.UnityContainer.Resolve<IReceiveGroupMemberLeave> (\"{1}\").ReceiveGroupMemberLeave;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveMemberLeave_{0} = Common.Container.ResolveKeyed<IReceiveGroupMemberLeave> (\"{1}\").ReceiveGroupMemberLeave;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveGroupMemberRemove> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveGroupMemberRemove> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveMemberRemove_{0} = Common.UnityContainer.Resolve<IReceiveGroupMemberRemove> (\"{1}\").ReceiveGroupMemberRemove;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveMemberRemove_{0} = Common.Container.ResolveKeyed<IReceiveGroupMemberRemove> (\"{1}\").ReceiveGroupMemberRemove;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 103:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveGroupMemberPass> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveGroupMemberPass> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveMemberPass_{0} = Common.UnityContainer.Resolve<IReceiveGroupMemberPass> (\"{1}\").ReceiveGroupMemberPass;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveMemberPass_{0} = Common.Container.ResolveKeyed<IReceiveGroupMemberPass> (\"{1}\").ReceiveGroupMemberPass;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveGroupMemberBeInvitee> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveGroupMemberBeInvitee> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveMemberBeInvitee_{0} = Common.UnityContainer.Resolve<IReceiveGroupMemberBeInvitee> (\"{1}\").ReceiveGroupMemberBeInvitee;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveMemberBeInvitee_{0} = Common.Container.ResolveKeyed<IReceiveGroupMemberBeInvitee> (\"{1}\").ReceiveGroupMemberBeInvitee;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 104:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveSetGroupBan> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveSetGroupBan> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveSetGroupBan_{0} = Common.UnityContainer.Resolve<IReceiveSetGroupBan> (\"{1}\").ReceiveSetGroupBan;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveSetGroupBan_{0} = Common.Container.ResolveKeyed<IReceiveSetGroupBan> (\"{1}\").ReceiveSetGroupBan;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveRemoveGroupBan> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveRemoveGroupBan> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveRemoveGroupBan_{0} = Common.UnityContainer.Resolve<IReceiveRemoveGroupBan> (\"{1}\").ReceiveRemoveGroupBan;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveRemoveGroupBan_{0} = Common.Container.ResolveKeyed<IReceiveRemoveGroupBan> (\"{1}\").ReceiveRemoveGroupBan;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 201:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveFriendIncrease> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveFriendIncrease> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveFriendIncrease_{0} = Common.UnityContainer.Resolve<IReceiveFriendIncrease> (\"{1}\").ReceiveFriendIncrease;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveFriendIncrease_{0} = Common.Container.ResolveKeyed<IReceiveFriendIncrease> (\"{1}\").ReceiveFriendIncrease;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 301:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveFriendAddRequest> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveFriendAddRequest> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveFriendAdd_{0} = Common.UnityContainer.Resolve<IReceiveFriendAddRequest> (\"{1}\").ReceiveFriendAddRequest;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveFriendAdd_{0} = Common.Container.ResolveKeyed<IReceiveFriendAddRequest> (\"{1}\").ReceiveFriendAddRequest;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 						case 302:
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveAddGroupRequest> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveAddGroupRequest> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveAddGroupRequest_{0} = Common.UnityContainer.Resolve<IReceiveAddGroupRequest> (\"{1}\").ReceiveAddGroupRequest;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveAddGroupRequest_{0} = Common.Container.ResolveKeyed<IReceiveAddGroupRequest> (\"{1}\").ReceiveAddGroupRequest;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
-							temp.AppendLine (string.Format ("\t\t\tif (Common.UnityContainer.IsRegistered<IReceiveAddGroupBeInvitee> (\"{0}\") == true)", token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\tif (Common.Container.IsRegisteredWithKey<IReceiveAddGroupBeInvitee> (\"{0}\") == true)", token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t{");				
-							temp.AppendLine (string.Format ("\t\t\t\tReceiveAddGroupBeInvitee_{0} = Common.UnityContainer.Resolve<IReceiveAddGroupBeInvitee> (\"{1}\").ReceiveAddGroupBeInvitee;", token["id"].Value<int> (), token["name"].Value<string> ()));
+							temp.AppendLine (string.Format ("\t\t\t\tReceiveAddGroupBeInvitee_{0} = Common.Container.ResolveKeyed<IReceiveAddGroupBeInvitee> (\"{1}\").ReceiveAddGroupBeInvitee;", token["id"].Value<int> (), token["name"].Value<string> ()));
 							temp.AppendLine ("\t\t\t}");
 							break;
 					}

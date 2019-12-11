@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Native.Csharp.Sdk.Cqp.EventArgs;
 using Native.Csharp.Sdk.Cqp.Interface;
-using Unity;
+using Autofac;
 
 namespace Native.Csharp.App.Core
 {
@@ -35,9 +35,9 @@ namespace Native.Csharp.App.Core
 			 * Name: 运行时间
 			 * Function: _statusUptime
 			 */
-			if (Common.UnityContainer.IsRegistered<ICqStatus> ("运行时间") == true)
+			if (Common.Container.IsRegisteredWithKey<ICqStatus> ("运行时间") == true)
 			{
-				Status_UPTIME = Common.UnityContainer.Resolve<ICqStatus> ("运行时间").CqStatus;
+				Status_UPTIME = Common.Container.ResolveKeyed<ICqStatus> ("运行时间").CqStatus;
 			}
 
 

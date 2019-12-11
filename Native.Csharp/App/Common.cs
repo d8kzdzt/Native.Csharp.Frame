@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Native.Csharp.Sdk.Cqp;
-using Unity;
+using Autofac;
 
 namespace Native.Csharp.App
 {
@@ -33,9 +33,14 @@ namespace Native.Csharp.App
         public static bool IsRunning { get; set; }
 
         /// <summary>
+        /// 获取或设置当前 App 使用的依赖注入容器
+        /// </summary>
+        public static ContainerBuilder ContainerBuilder { get; set; }
+
+        /// <summary>
         /// 获取或设置当前 App 使用的依赖注入容器实例
         /// </summary>
-        public static IUnityContainer UnityContainer { get; set; }
+        public static IContainer Container { get; set; }
 		
 		/// <summary>
 		/// 获取或设置当前 App 使用的 酷Q Api 接口实例
