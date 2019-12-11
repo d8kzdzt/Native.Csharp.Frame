@@ -16,8 +16,8 @@ using Autofac;
 
 namespace Native.Csharp.App.Core
 {
-    public class LibExport
-    {
+	public class LibExport
+	{
 		#region --字段--
 		private static Encoding _defaultEncoding = null;
 		#endregion
@@ -107,7 +107,7 @@ namespace Native.Csharp.App.Core
 				innerLog.AppendLine ("发现未处理的异常!");
 				innerLog.AppendLine ("异常堆栈：");
 				innerLog.AppendLine (ex.ToString ());
-				Common.CqApi.AddFatalError (innerLog.ToString ());      //将未经处理的异常弹回酷Q做处理
+				Common.CqApi.AddFatalError (innerLog.ToString ());	  //将未经处理的异常弹回酷Q做处理
 			}
 		}
 		
@@ -658,6 +658,6 @@ namespace Native.Csharp.App.Core
 
 
 		#endregion
-    }
+	}
 }
 

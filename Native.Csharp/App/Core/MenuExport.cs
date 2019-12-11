@@ -12,18 +12,18 @@ using Autofac;
 
 namespace Native.Csharp.App.Core
 {
-    public class MenuExport
-    {
+	public class MenuExport
+	{
 		#region --构造函数--
 		/// <summary>
 		/// 静态构造函数, 注册依赖注入回调
 		/// </summary>
-        static MenuExport ()
-        {
+		static MenuExport ()
+		{
 			// 分发应用内事件
 			ResolveAppbackcall ();
-        }
-        #endregion
+		}
+		#endregion
 
 		#region --私有方法--
 		/// <summary>
@@ -51,7 +51,7 @@ namespace Native.Csharp.App.Core
 
 
 		}
-        #endregion
+		#endregion
 
 		#region --导出方法--
 		/*
@@ -86,6 +86,6 @@ namespace Native.Csharp.App.Core
 
 
 		#endregion
-    }
+	}
 }
 
