@@ -8,16 +8,19 @@ on:
       - master
 jobs:
   build:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v1
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.100
       - name: Install NuGet
         run: |
           $sourceNugetExe = "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
           $targetNugetExe = "nuget.exe"
           Invoke-WebRequest $sourceNugetExe -OutFile $targetNugetExe
-        shell: pwsh
       - name: Restore Projects
         run: |
           .\nuget restore "$Env:GITHUB_WORKSPACE"
